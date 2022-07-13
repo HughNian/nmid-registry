@@ -6,16 +6,18 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.etcd.io/etcd/server/v3/embed"
+	"nmid-registry/pkg/loger"
 	"nmid-registry/pkg/option"
 	"sync"
 	"time"
 )
 
 const (
-	HeartbeatTime = 5 * time.Second
 	ServerTimeout = 10 * time.Minute
-	LeaseTTL      = clientv3.MaxLeaseTTL // 9000000000Second=285Year
-	TTLTimeout    = 5
+
+	HeartbeatTime    = 5 * time.Second
+	DefragNormalTime = 1 * time.Hour
+	DefragFailedTime = 1 * time.Minute
 
 	ClientDialTimeout      = 10 * time.Second
 	ClientKeepAlive        = 1 * time.Minute
@@ -23,10 +25,9 @@ const (
 )
 
 const (
-	LeaseFormat         = "/leases/%s" //+memberName
-	StatusMemberPrefix  = "/status/members/"
-	StatusMemberFormat  = "/status/members/%s" // +memberName
-	NmidrClusterNameKey = "/nmidr/cluster/name"
+	StatusMemberPrefix = "/status/members/"
+	StatusMemberFormat = "/status/members/%s" // +memberName
+	NmClusterNameKey   = "/nm/cluster/name"
 )
 
 type Cluster interface {
@@ -47,13 +48,14 @@ type cluster struct {
 	lease   *clientv3.LeaseID
 	session *concurrency.Session
 	members *Members
+
+	done chan struct{}
 }
 
 func NewCluster(opt *option.Options) (Cluster, error) {
 	var members *Members
 	var err error
 
-	// defensive programming
 	requestTimeout, err := time.ParseDuration(opt.ClusterRequestTimeout)
 	if err != nil {
 		return nil, fmt.Errorf("invalid cluster request timeout: %v", err)
@@ -70,6 +72,7 @@ func NewCluster(opt *option.Options) (Cluster, error) {
 		options:        opt,
 		members:        members,
 		requestTimeout: requestTimeout,
+		done:           make(chan struct{}),
 	}
 
 	return clu, nil
@@ -80,10 +83,37 @@ func (c *cluster) ClusterReady() (err error) {
 	return nil
 }
 
+func (c *cluster) ClusterRun() {
+
+}
+
+func (c *cluster) CheckClusterName() error {
+	value, err := c.Get(NmClusterNameKey)
+	if nil != err {
+		return fmt.Errorf("check cluster name err %v", err)
+	}
+
+	if len(value) > 0 {
+		if c.options.ClusterName != value {
+			loger.Loger.Errorf("clustername check mismatch local(%s) != exist(%s)", c.options.ClusterName, value)
+			panic(err)
+		}
+	} else {
+		return fmt.Errorf("key %s not found", NmClusterNameKey)
+	}
+
+	return nil
+}
+
 func (c *cluster) RequestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), c.requestTimeout)
 }
 
 func (c *cluster) IsLeader() bool {
-	return true
+	server, err := c.GetClusterServer()
+	if err != nil {
+		return false
+	}
+
+	return server.Server.Leader() == server.Server.ID()
 }

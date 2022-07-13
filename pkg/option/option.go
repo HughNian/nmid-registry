@@ -19,6 +19,7 @@ type Options struct {
 	APIAddr string            `yaml:"api-addr"`
 
 	//cluster options
+	ClusterDebug                    bool           `yaml:"cluster-debug"`
 	ClusterName                     string         `yaml:"cluster-name"`
 	ClusterRole                     string         `yaml:"cluster-role"`
 	ClusterRequestTimeout           string         `yaml:"cluster-request-timeout"`

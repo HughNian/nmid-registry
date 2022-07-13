@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go.etcd.io/etcd/server/v3/embed"
 	"nmid-registry/pkg/loger"
+	"sync"
 	"time"
 )
 
@@ -40,10 +41,9 @@ func (c *cluster) EtcdServerHandle(server *embed.Etcd) {
 	case <-server.Server.ReadyNotify():
 		c.server = server
 		if c.server.Config().IsNewCluster() {
-			err := c.Put(NmidrClusterNameKey, c.options.ClusterName)
+			err := c.Put(NmClusterNameKey, c.options.ClusterName)
 			if err != nil {
-				err = fmt.Errorf("register cluster name %s failed: %v",
-					c.options.ClusterName, err)
+				err = fmt.Errorf("register cluster name %s failed: %v", c.options.ClusterName, err)
 				loger.Loger.Errorf("%v", err)
 				panic(err)
 			}
@@ -63,6 +63,37 @@ func (c *cluster) EtcdServerHandle(server *embed.Etcd) {
 	case <-time.After(ServerTimeout):
 		CloseClusterServer(server)
 	}
+}
+
+func (c *cluster) GetClusterServer() (*embed.Etcd, error) {
+	c.serverMutex.RLock()
+	defer c.serverMutex.RUnlock()
+
+	if c.server == nil {
+		return nil, fmt.Errorf("server is not ready")
+	}
+	return c.server, nil
+}
+
+func (c *cluster) CloseServer() {
+	c.serverMutex.Lock()
+	defer c.serverMutex.Unlock()
+
+	if c.server == nil {
+		return
+	}
+
+	CloseClusterServer(c.server)
+	c.server = nil
+}
+
+func (c *cluster) Close(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	close(c.done)
+	c.CloseClusterSession()
+	c.CloseClusterClient()
+	c.CloseServer()
 }
 
 func CloseClusterServer(server *embed.Etcd) {

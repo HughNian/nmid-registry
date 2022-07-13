@@ -8,15 +8,15 @@ import (
 	"sync"
 )
 
-type Members struct {
-	sync.RWMutex
-
-	Options        *option.Options
-	ClusterMembers *membersArr
-	KnownMembers   *membersArr
-}
-
 type (
+	Members struct {
+		sync.RWMutex
+
+		Options        *option.Options
+		ClusterMembers *membersArr
+		KnownMembers   *membersArr
+	}
+
 	membersArr []*member
 
 	member struct {
@@ -78,9 +78,24 @@ func (m *Members) InitCluster2String() string {
 	return m.ClusterMembers.initCluster2String()
 }
 
+func (m *Members) KnownPeerUrls() []string {
+	m.RLock()
+	defer m.RUnlock()
+
+	return m.KnownMembers.peerUrls()
+}
+
 func (ma membersArr) Len() int           { return len(ma) }
 func (ma membersArr) Swap(i, j int)      { ma[i], ma[j] = ma[j], ma[i] }
 func (ma membersArr) Less(i, j int) bool { return ma[i].Name < ma[j].Name }
+
+func (ma membersArr) peerUrls() []string {
+	ss := make([]string, 0)
+	for _, m := range ma {
+		ss = append(ss, m.PeerUrl)
+	}
+	return ss
+}
 
 func (ma membersArr) initCluster2String() string {
 	ss := make([]string, 0)
