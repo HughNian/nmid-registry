@@ -2,10 +2,20 @@ package cluster
 
 import (
 	"fmt"
+	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	"nmid-registry/pkg/loger"
 	"nmid-registry/pkg/option"
 	"strings"
 	"sync"
+)
+
+const (
+	MembersFilename       = "members.yaml"
+	MembersBackupFilename = "members.bak.yaml"
+
+	StatusMemberPrefix = "/status/members/"
+	StatusMemberFormat = "/status/members/%s" // +memberName
+	NmClusterNameKey   = "/nm/cluster/name"
 )
 
 type (
@@ -23,6 +33,18 @@ type (
 		ID      uint64 `yaml:"id"`
 		Name    string `yaml:"name"`
 		PeerUrl string `yaml:"peerUrl"`
+	}
+
+	MemberStatus struct {
+		Options option.Options `yaml:"options"`
+
+		// RFC3339 format
+		LastHeartbeatTime string `yaml:"lastHeartbeatTime"`
+
+		LastDefragTime string `yaml:"lastDefragTime,omitempty"`
+
+		// Etcd is non-nil only if it's cluster status is primary.
+		Etcd *EtcdStatus `yaml:"etcd,omitempty"`
 	}
 )
 
@@ -83,6 +105,12 @@ func (m *Members) KnownPeerUrls() []string {
 	defer m.RUnlock()
 
 	return m.KnownMembers.peerUrls()
+}
+
+func (m *Members) UpdateClusterMembers(pbMembers []*etcdserverpb.Member) {
+	m.Lock()
+	defer m.Unlock()
+
 }
 
 func (ma membersArr) Len() int           { return len(ma) }

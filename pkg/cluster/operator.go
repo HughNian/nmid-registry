@@ -1,6 +1,9 @@
 package cluster
 
-import "go.etcd.io/etcd/api/v3/mvccpb"
+import (
+	"go.etcd.io/etcd/api/v3/mvccpb"
+	clientv3 "go.etcd.io/etcd/client/v3"
+)
 
 func (c *cluster) Put(key, value string) error {
 	client, err := c.GetClusterClient()
@@ -11,6 +14,26 @@ func (c *cluster) Put(key, value string) error {
 	ctx, cancel := c.RequestContext()
 	defer cancel()
 	_, err = client.Put(ctx, key, value)
+	return err
+}
+
+func (c *cluster) PutUnderLease(key, value string) error {
+	client, err := c.GetClusterClient()
+	if err != nil {
+		return err
+	}
+
+	lease, err := c.GetLease()
+	if err != nil {
+		return err
+	}
+
+	_, err = func() (*clientv3.PutResponse, error) {
+		ctx, cancel := c.RequestContext()
+		defer cancel()
+		return client.Put(ctx, key, value, clientv3.WithLease(lease))
+	}()
+
 	return err
 }
 

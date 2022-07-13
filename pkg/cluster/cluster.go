@@ -2,12 +2,15 @@ package cluster
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.etcd.io/etcd/server/v3/embed"
+	yaml "gopkg.in/yaml.v2"
 	"nmid-registry/pkg/loger"
 	"nmid-registry/pkg/option"
+	"strings"
 	"sync"
 	"time"
 )
@@ -15,19 +18,25 @@ import (
 const (
 	ServerTimeout = 10 * time.Minute
 
-	HeartbeatTime    = 5 * time.Second
-	DefragNormalTime = 1 * time.Hour
-	DefragFailedTime = 1 * time.Minute
+	HeartbeatTime = 5 * time.Second
 
 	ClientDialTimeout      = 10 * time.Second
 	ClientKeepAlive        = 1 * time.Minute
 	ClientKeepAliveTimeout = 1 * time.Minute
 )
 
-const (
-	StatusMemberPrefix = "/status/members/"
-	StatusMemberFormat = "/status/members/%s" // +memberName
-	NmClusterNameKey   = "/nm/cluster/name"
+type (
+	EtcdStatus struct {
+		ID        string `yaml:"id"`
+		StartTime string `yaml:"startTime"`
+		State     string `yaml:"state"`
+	}
+
+	etcdStats struct {
+		ID        string    `json:"id"`
+		State     string    `json:"state"`
+		StartTime time.Time `json:"startTime"`
+	}
 )
 
 type Cluster interface {
@@ -79,12 +88,69 @@ func NewCluster(opt *option.Options) (Cluster, error) {
 }
 
 func (c *cluster) ClusterReady() (err error) {
+	if c.options.ClusterRole == "slave" {
+		_, err := c.GetClusterClient()
+		if err != nil {
+			return err
+		}
+
+		err = c.CheckClusterName()
+		if err != nil {
+			return err
+		}
+
+		err = c.NewLease()
+		if err != nil {
+			return fmt.Errorf("new lease err %v", err)
+		}
+
+		go c.KeepAliveLease()
+
+		return nil
+	}
+
+	err = c.StartClusterServer()
+	if err != nil {
+		return fmt.Errorf("start server failed: %v", err)
+	}
+
+	err = c.NewLease()
+	if err != nil {
+		return fmt.Errorf("new lease failed: %v", err)
+	}
+
+	go c.KeepAliveLease()
 
 	return nil
 }
 
 func (c *cluster) ClusterRun() {
+	var tryTimes int
+	var tryReady = func() error {
+		tryTimes++
+		err := c.ClusterReady()
+		return err
+	}
 
+	if err := tryReady(); nil != err {
+		for {
+			time.Sleep(HeartbeatTime)
+			err := tryReady()
+			if err != nil {
+				loger.Loger.Errorf("failed start many times(%d)", tryTimes)
+			} else {
+				break
+			}
+		}
+	}
+
+	loger.Loger.Infof("cluster is ready")
+
+	if c.options.ClusterRole == "master" {
+		go c.DoDefrag()
+	}
+
+	go c.BackendHandle()
 }
 
 func (c *cluster) CheckClusterName() error {
@@ -105,8 +171,90 @@ func (c *cluster) CheckClusterName() error {
 	return nil
 }
 
+//BackendHandle 处理集群状态同步，更新成员信息
+func (c *cluster) BackendHandle() {
+	for {
+		select {
+		case <-time.After(HeartbeatTime):
+			err := c.SyncStatus()
+			if err != nil {
+				loger.Loger.Errorf("sync status failed %v", err)
+			}
+
+			err = c.UpdateMembers()
+			if err != nil {
+				loger.Loger.Errorf("update members failed %v", err)
+			}
+
+		case <-c.done:
+			return
+		}
+	}
+}
+
+//SyncStatus 同步状态
+func (c *cluster) SyncStatus() error {
+	status := MemberStatus{
+		Options: *c.options,
+	}
+
+	if c.options.ClusterRole == "master" {
+		server, err := c.GetClusterServer()
+		if err != nil {
+			return err
+		}
+
+		buff := server.Server.SelfStats()
+		stats, err := newEtcdStats(buff)
+		if err != nil {
+			return err
+		}
+		status.Etcd = stats.toEtcdStatus()
+	}
+
+	status.LastHeartbeatTime = time.Now().Format(time.RFC3339)
+
+	buff, err := yaml.Marshal(status)
+	if err != nil {
+		return err
+	}
+
+	err = c.PutUnderLease(StatusMemberFormat, string(buff))
+	if err != nil {
+		return fmt.Errorf("put status failed: %v", err)
+	}
+
+	return nil
+}
+
+//UpdateMembers 更新成员信息
+func (c *cluster) UpdateMembers() error {
+	client, err := c.GetClusterClient()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := c.RequestContext()
+	defer cancel()
+	resp, err := client.MemberList(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	if c.members != nil {
+		c.members.UpdateClusterMembers(resp.Members)
+	}
+	return nil
+}
+
 func (c *cluster) RequestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), c.requestTimeout)
+}
+
+func (c *cluster) LongRequestContext() (context.Context, context.CancelFunc) {
+	timeout := 3 * c.requestTimeout
+	return context.WithTimeout(context.Background(), timeout)
 }
 
 func (c *cluster) IsLeader() bool {
@@ -116,4 +264,22 @@ func (c *cluster) IsLeader() bool {
 	}
 
 	return server.Server.Leader() == server.Server.ID()
+}
+
+func newEtcdStats(buff []byte) (*etcdStats, error) {
+	stats := etcdStats{}
+	err := json.Unmarshal(buff, &stats)
+	if err != nil {
+		return nil, err
+	}
+
+	return &stats, nil
+}
+
+func (s *etcdStats) toEtcdStatus() *EtcdStatus {
+	return &EtcdStatus{
+		ID:        s.ID,
+		State:     strings.TrimPrefix(s.State, "State"),
+		StartTime: s.StartTime.Format(time.RFC3339),
+	}
 }

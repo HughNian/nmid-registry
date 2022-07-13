@@ -43,7 +43,8 @@ func (c *cluster) EtcdServerHandle(server *embed.Etcd) {
 		if c.server.Config().IsNewCluster() {
 			err := c.Put(NmClusterNameKey, c.options.ClusterName)
 			if err != nil {
-				err = fmt.Errorf("register cluster name %s failed: %v", c.options.ClusterName, err)
+				err = fmt.Errorf("register cluster name %s failed: %v",
+					c.options.ClusterName, err)
 				loger.Loger.Errorf("%v", err)
 				panic(err)
 			}
@@ -53,7 +54,8 @@ func (c *cluster) EtcdServerHandle(server *embed.Etcd) {
 			select {
 			case err, ok := <-s.Err():
 				if ok {
-					loger.Loger.Errorf("etcd server %s serve failed: %v", c.server.Config().Name, err)
+					loger.Loger.Errorf("etcd server %s serve failed: %v",
+						c.server.Config().Name, err)
 					CloseClusterServer(s)
 				}
 			}

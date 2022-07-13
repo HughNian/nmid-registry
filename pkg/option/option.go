@@ -84,6 +84,19 @@ func (opt *Options) IsUseInitialCluster() bool {
 	return len(opt.Cluster.InitialCluster) > 0
 }
 
+func (opt *Options) GetFirstAdvertiseClientURL() (string, error) {
+	if opt.IsUseInitialCluster() {
+		if len(opt.Cluster.AdvertiseClientURLs) == 0 {
+			return "", fmt.Errorf("cluster.advertise-client-URLs is empty")
+		}
+		return opt.Cluster.AdvertiseClientURLs[0], nil
+	}
+	if len(opt.ClusterAdvertiseClientURLs) == 0 {
+		return "", fmt.Errorf("cluster-advertise-client-URLs is empty")
+	}
+	return opt.ClusterAdvertiseClientURLs[0], nil
+}
+
 func ParseUrls(urlStr []string) ([]url.URL, error) {
 	urls := make([]url.URL, len(urlStr))
 
