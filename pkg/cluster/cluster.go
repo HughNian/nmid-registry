@@ -23,16 +23,18 @@ const (
 	ClientDialTimeout      = 10 * time.Second
 	ClientKeepAlive        = 1 * time.Minute
 	ClientKeepAliveTimeout = 1 * time.Minute
+
+	NmClusterNameKey = "/nm/cluster/name"
 )
 
 type (
-	EtcdStatus struct {
+	ClusterStatus struct {
 		ID        string `yaml:"id"`
-		StartTime string `yaml:"startTime"`
 		State     string `yaml:"state"`
+		StartTime string `yaml:"startTime"`
 	}
 
-	etcdStats struct {
+	clusterStats struct {
 		ID        string    `json:"id"`
 		State     string    `json:"state"`
 		StartTime time.Time `json:"startTime"`
@@ -205,11 +207,11 @@ func (c *cluster) SyncStatus() error {
 		}
 
 		buff := server.Server.SelfStats()
-		stats, err := newEtcdStats(buff)
+		stats, err := newClusterStats(buff)
 		if err != nil {
 			return err
 		}
-		status.Etcd = stats.toEtcdStatus()
+		status.CStatus = stats.toClusterStatus()
 	}
 
 	status.LastHeartbeatTime = time.Now().Format(time.RFC3339)
@@ -266,8 +268,8 @@ func (c *cluster) IsLeader() bool {
 	return server.Server.Leader() == server.Server.ID()
 }
 
-func newEtcdStats(buff []byte) (*etcdStats, error) {
-	stats := etcdStats{}
+func newClusterStats(buff []byte) (*clusterStats, error) {
+	stats := clusterStats{}
 	err := json.Unmarshal(buff, &stats)
 	if err != nil {
 		return nil, err
@@ -276,8 +278,8 @@ func newEtcdStats(buff []byte) (*etcdStats, error) {
 	return &stats, nil
 }
 
-func (s *etcdStats) toEtcdStatus() *EtcdStatus {
-	return &EtcdStatus{
+func (s *clusterStats) toClusterStatus() *ClusterStatus {
+	return &ClusterStatus{
 		ID:        s.ID,
 		State:     strings.TrimPrefix(s.State, "State"),
 		StartTime: s.StartTime.Format(time.RFC3339),

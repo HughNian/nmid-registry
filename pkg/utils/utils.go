@@ -25,3 +25,8 @@ func IsDirEmpty(name string) bool {
 	_, err = f.Readdirnames(1)
 	return err == io.EOF
 }
+
+func FileExist(file string) bool {
+	_, err := os.Stat(file)
+	return !os.IsNotExist(err)
+}

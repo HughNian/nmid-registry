@@ -14,6 +14,7 @@ func (c *cluster) Put(key, value string) error {
 	ctx, cancel := c.RequestContext()
 	defer cancel()
 	_, err = client.Put(ctx, key, value)
+
 	return err
 }
 
