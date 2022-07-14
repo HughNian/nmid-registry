@@ -206,8 +206,8 @@ func (c *cluster) SyncStatus() error {
 			return err
 		}
 
-		buff := server.Server.SelfStats()
-		stats, err := newClusterStats(buff)
+		selfStats := server.Server.SelfStats()
+		stats, err := newClusterStats(selfStats)
 		if err != nil {
 			return err
 		}
@@ -216,12 +216,13 @@ func (c *cluster) SyncStatus() error {
 
 	status.LastHeartbeatTime = time.Now().Format(time.RFC3339)
 
-	buff, err := yaml.Marshal(status)
+	yamlVal, err := yaml.Marshal(status)
 	if err != nil {
 		return err
 	}
 
-	err = c.PutUnderLease(StatusMemberFormat, string(buff))
+	leaseKey := fmt.Sprintf(StatusMemberFormat, c.options.Name)
+	err = c.PutUnderLease(leaseKey, string(yamlVal))
 	if err != nil {
 		return fmt.Errorf("put status failed: %v", err)
 	}
@@ -236,10 +237,11 @@ func (c *cluster) UpdateMembers() error {
 		return err
 	}
 
-	ctx, cancel := c.RequestContext()
-	defer cancel()
-	resp, err := client.MemberList(ctx)
-
+	resp, err := func() (*clientv3.MemberListResponse, error) {
+		ctx, cancel := c.RequestContext()
+		defer cancel()
+		return client.MemberList(ctx)
+	}()
 	if err != nil {
 		return err
 	}
@@ -247,6 +249,7 @@ func (c *cluster) UpdateMembers() error {
 	if c.members != nil {
 		c.members.UpdateClusterMembers(resp.Members)
 	}
+
 	return nil
 }
 

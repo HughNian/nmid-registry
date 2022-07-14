@@ -173,7 +173,7 @@ func (m *Members) loadFileData() error {
 func (m *Members) storeFileData() {
 	data, err := yaml.Marshal(m)
 	if err != nil {
-		loger.Loger.Errorf("store file data get yaml of %#v failed: %v", m.KnownMembers, err)
+		loger.Loger.Errorf("store file data get yaml of %v failed: %v", m.KnownMembers, err)
 	}
 	if bytes.Equal(m.lastData, data) {
 		return
@@ -203,6 +203,7 @@ func (m *Members) UpdateClusterMembers(pbMembers []*etcdserverpb.Member) {
 	defer m.Unlock()
 
 	oldSelfID := m.GetSelf().ID
+
 	ma := pbMembers2MembersArr(pbMembers)
 	ma.update(membersArr{m.selfWithoutID()})
 	m.ClusterMembers.replace(ma)
