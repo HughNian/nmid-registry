@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/viper"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type Options struct {
@@ -14,9 +15,13 @@ type Options struct {
 	YamlStr string
 
 	// meta
-	Name    string            `yaml:"name" env:"NMID_NAME"`
-	Labels  map[string]string `yaml:"labels" env:"NMID_LABELS"`
-	APIAddr string            `yaml:"api-addr"`
+	WriteOnly       bool              `yaml:"write-only"`
+	Name            string            `yaml:"name" env:"NMIDR_NAME"`
+	Labels          map[string]string `yaml:"labels" env:"NMIDR_LABELS"`
+	ApiAddr         string            `yaml:"api-addr"`
+	ApiTimeout      time.Duration     `yaml:"api-timeout"`
+	ApiReadTimeout  time.Duration     `yaml:"api-read-timeout"`
+	ApiWriteTimeout time.Duration     `yaml:"api-write-timeout"`
 
 	//cluster options
 	ClusterDebug                    bool           `yaml:"cluster-debug"`
