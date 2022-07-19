@@ -3,17 +3,24 @@ package apiserver
 import (
 	"errors"
 	bm "github.com/go-kratos/kratos/pkg/net/http/blademaster"
+	"nmid-registry/pkg/registry"
 )
 
 var (
-	writeOnly     bool
-	errProtectMsg = errors.New("registry in protect mode & only can do register")
+	re        *registry.Registry
+	writeOnly bool
+	errMsg    = errors.New("registry in protect mode & only can do register")
 )
 
-func HttpRouter(apiServer *ApiServer) {
+func DoApiServer(apiServer *ApiServer) {
 	writeOnly = apiServer.IsWriteOnly()
 
-	httpServer := apiServer.server
+	re = registry.NewRegistry(apiServer.cluster)
+
+	HttpRouter(apiServer.server)
+}
+
+func HttpRouter(httpServer *bm.Engine) {
 	group := httpServer.Group("/registry")
 	{
 		group.POST("/register", Register)
@@ -29,7 +36,7 @@ func HttpRouter(apiServer *ApiServer) {
 
 func WriteOnly(c *bm.Context) {
 	if writeOnly {
-		c.JSON(nil, errProtectMsg)
+		c.JSON(nil, errMsg)
 		c.AbortWithStatus(503)
 	}
 }

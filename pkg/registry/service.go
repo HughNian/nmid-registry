@@ -1,6 +1,8 @@
 package registry
 
-import "sync"
+import (
+	"time"
+)
 
 //instance status
 const (
@@ -8,25 +10,29 @@ const (
 	InstanceError
 )
 
-type Service struct {
-	sync.RWMutex
+var (
+	now = time.Now().UnixNano()
+)
 
-	ServiceId string
-	Zone      string
-	Instances map[string]*Instance
+type Service struct {
+	ServiceId  string
+	InFlowUrl  string
+	OutFlowUrl string
+	Instances  map[string]*Instance
 
 	LatestTimestamp int64
 }
 
 type Instance struct {
-	Region   string
-	Zone     string
-	Env      string
-	AppID    string
-	HostName string
-	Addrs    []string
-	Version  string
-	Metadata map[string]string
+	Region      string
+	Zone        string
+	Env         string
+	ServiceId   string
+	ServiceName string
+	HostName    string
+	Addrs       []string
+	Version     string
+	Metadata    map[string]string
 
 	Status uint32
 
@@ -37,4 +43,12 @@ type Instance struct {
 	DirtyTimestamp int64
 
 	LatestTimestamp int64
+}
+
+func NewService(arg *ArgRegister) *Service {
+	return &Service{}
+}
+
+func NewInstance(arg *ArgRegister) *Instance {
+	return &Instance{}
 }

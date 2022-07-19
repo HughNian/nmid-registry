@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go.etcd.io/etcd/api/v3/mvccpb"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.etcd.io/etcd/server/v3/embed"
@@ -43,6 +44,10 @@ type (
 
 type Cluster interface {
 	IsLeader() bool
+	Put(key, value string) error
+	PutUnderLease(key, value string) error
+	Get(key string) (string, error)
+	GetRaw(key string) (*mvccpb.KeyValue, error)
 }
 
 type cluster struct {

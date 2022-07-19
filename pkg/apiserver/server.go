@@ -2,7 +2,6 @@ package apiserver
 
 import (
 	"context"
-	"fmt"
 	bm "github.com/go-kratos/kratos/pkg/net/http/blademaster"
 	"nmid-registry/pkg/cluster"
 	"nmid-registry/pkg/loger"
@@ -15,10 +14,6 @@ const (
 	ApiPrefix = ""
 	LockKey   = "/config/lock"
 )
-
-func AboutMe() string {
-	return fmt.Sprintf(`Copyright© 2021 - %d Nmid-Registry(http://www.niansong.top). Nmid-Registry is Nmid Register Center All rights reserved.Apache License 2.0.`, time.Now().Year())
-}
 
 type (
 	ApiServer struct {
@@ -48,7 +43,7 @@ func NewApiServer(opt *option.Options, cls cluster.Cluster) *ApiServer {
 	})
 	apiServer.server = httpServer
 
-	HttpRouter(apiServer)
+	DoApiServer(apiServer)
 
 	if err := apiServer.server.Start(); err != nil {
 		loger.Loger.Errorf("http server error %v", err)
