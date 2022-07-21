@@ -18,7 +18,7 @@ func Register(c *bm.Context) {
 		return
 	}
 
-	if ins.Status != registry.InstanceOk || ins.Status > registry.InstanceError {
+	if ins.Status == 0 || ins.Status > registry.InstanceError {
 		loger.Loger.Error("params status invalid")
 		return
 	}

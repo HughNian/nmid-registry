@@ -29,7 +29,7 @@ type (
 	}
 )
 
-func NewApiServer(opt *option.Options, cls cluster.Cluster) *ApiServer {
+func NewApiServer(opt *option.Options, cls cluster.Cluster) (*ApiServer, error) {
 	apiServer := &ApiServer{
 		option:    opt,
 		writeOnly: opt.WriteOnly,
@@ -47,11 +47,11 @@ func NewApiServer(opt *option.Options, cls cluster.Cluster) *ApiServer {
 
 	if err := apiServer.server.Start(); err != nil {
 		loger.Loger.Errorf("http server error %v", err)
-		panic(err)
+		return nil, err
 	}
 	loger.Loger.Infof("http server start Listening on: %s", opt.ApiAddr)
 
-	return apiServer
+	return apiServer, nil
 }
 
 func (as *ApiServer) CloseApiServer(wg *sync.WaitGroup) {

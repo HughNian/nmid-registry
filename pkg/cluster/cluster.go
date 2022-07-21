@@ -48,6 +48,7 @@ type Cluster interface {
 	PutUnderLease(key, value string) error
 	Get(key string) (string, error)
 	GetRaw(key string) (*mvccpb.KeyValue, error)
+	CloseCluster(wg *sync.WaitGroup)
 }
 
 type cluster struct {

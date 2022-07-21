@@ -89,7 +89,7 @@ func (c *cluster) CloseServer() {
 	c.server = nil
 }
 
-func (c *cluster) Close(wg *sync.WaitGroup) {
+func (c *cluster) CloseCluster(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	close(c.done)

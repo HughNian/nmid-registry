@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -18,21 +19,20 @@ type Service struct {
 	ServiceId  string
 	InFlowUrl  string
 	OutFlowUrl string
-	Instances  map[string]*Instance
+	Instances  []*Instance
 
 	LatestTimestamp int64
 }
 
 type Instance struct {
-	Region      string
-	Zone        string
-	Env         string
-	ServiceId   string
-	ServiceName string
-	HostName    string
-	Addrs       []string
-	Version     string
-	Metadata    map[string]string
+	ServiceId string
+	Region    string
+	Zone      string
+	Env       string
+	HostName  string
+	Addrs     []string
+	Version   string
+	Metadata  map[string]string
 
 	Status uint32
 
@@ -46,9 +46,36 @@ type Instance struct {
 }
 
 func NewService(arg *ArgRegister) *Service {
-	return &Service{}
+	return &Service{
+		ServiceId:       arg.ServiceId,
+		InFlowUrl:       arg.InFlowUrl,
+		OutFlowUrl:      arg.OutFlowUrl,
+		Instances:       make([]*Instance, 0),
+		LatestTimestamp: now,
+	}
 }
 
 func NewInstance(arg *ArgRegister) *Instance {
-	return &Instance{}
+	ins := &Instance{
+		ServiceId:       arg.ServiceId,
+		Region:          arg.Region,
+		Zone:            arg.Zone,
+		Env:             arg.Env,
+		HostName:        arg.Hostname,
+		Addrs:           arg.Addrs,
+		Version:         arg.Version,
+		Status:          arg.Status,
+		RegTimestamp:    now,
+		UpTimestamp:     now,
+		RenewTimestamp:  now,
+		DirtyTimestamp:  now,
+		LatestTimestamp: now,
+	}
+
+	metaData := make(map[string]string)
+	if err := json.Unmarshal([]byte(arg.Metadata), &metaData); err == nil {
+		ins.Metadata = metaData
+	}
+
+	return ins
 }

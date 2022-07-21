@@ -74,17 +74,17 @@ func NewMembers(opt *option.Options) (*Members, error) {
 //initializeMembers adds first member to ClusterMembers and all members to KnownMembers.
 func (m *Members) initializeMembers(opt *option.Options) {
 	initMA := make(membersArr, 0)
-	if opt.ClusterRole == "master" && len(opt.ClusterInitialAdvertisePeerURLs) > 0 {
+	if opt.ClusterRole == "master" && len(opt.ClusterInitialAdvertisePeerUrls) > 0 {
 		initMA = append(initMA, &member{
 			Name:    opt.Name,
-			PeerUrl: opt.ClusterInitialAdvertisePeerURLs[0],
+			PeerUrl: opt.ClusterInitialAdvertisePeerUrls[0],
 		})
 	}
 	m.ClusterMembers.update(initMA)
 
 	//Add all members to list of known members
-	if len(opt.ClusterJoinURLs) > 0 {
-		for _, peerUrl := range opt.ClusterJoinURLs {
+	if len(opt.ClusterJoinUrls) > 0 {
+		for _, peerUrl := range opt.ClusterJoinUrls {
 			initMA = append(initMA, &member{
 				PeerUrl: peerUrl,
 			})
@@ -112,8 +112,8 @@ func (m *Members) GetSelf() *member {
 	}
 
 	peerURL := ""
-	if len(m.Options.ClusterInitialAdvertisePeerURLs) != 0 {
-		peerURL = m.Options.ClusterInitialAdvertisePeerURLs[0]
+	if len(m.Options.ClusterInitialAdvertisePeerUrls) != 0 {
+		peerURL = m.Options.ClusterInitialAdvertisePeerUrls[0]
 	}
 
 	return &member{
