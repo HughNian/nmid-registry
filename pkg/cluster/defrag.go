@@ -31,7 +31,7 @@ func (c *cluster) RunDefrag() time.Duration {
 		return DefragFailedTime
 	}
 
-	defragmentUrl, err := c.options.GetFirstAdvertiseClientURL()
+	defragmentUrl, err := c.options.GetFirstAdvertiseClientUrl()
 	if err != nil {
 		loger.Loger.Errorf("defrag err %v", err)
 		return DefragNormalTime

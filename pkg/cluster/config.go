@@ -19,19 +19,19 @@ const (
 func CreateEtcdConfig(opt *option.Options) (*embed.Config, error) {
 	config := embed.NewConfig()
 
-	clientUrls, err := option.ParseUrls(opt.Cluster.ListenClientURLs)
+	clientUrls, err := option.ParseUrls(opt.Cluster.ListenClientUrls)
 	if err != nil {
 		return nil, err
 	}
-	peerUrls, err := option.ParseUrls(opt.Cluster.ListenPeerURLs)
+	peerUrls, err := option.ParseUrls(opt.Cluster.ListenPeerUrls)
 	if err != nil {
 		return nil, err
 	}
-	adClientUrls, err := option.ParseUrls(opt.Cluster.AdvertiseClientURLs)
+	adClientUrls, err := option.ParseUrls(opt.Cluster.AdvertiseClientUrls)
 	if err != nil {
 		return nil, err
 	}
-	adPeerURLs, err := option.ParseUrls(opt.Cluster.InitialAdvertisePeerURLs)
+	adPeerURLs, err := option.ParseUrls(opt.Cluster.InitialAdvertisePeerUrls)
 	if err != nil {
 		return nil, err
 	}
@@ -64,19 +64,19 @@ func CreateEtcdConfig(opt *option.Options) (*embed.Config, error) {
 func CreateEtcdConfigAddMember(opt *option.Options, members *Members) (*embed.Config, error) {
 	config := embed.NewConfig()
 
-	clientUrls, err := option.ParseUrls(opt.Cluster.ListenClientURLs)
+	clientUrls, err := option.ParseUrls(opt.Cluster.ListenClientUrls)
 	if err != nil {
 		return nil, err
 	}
-	peerUrls, err := option.ParseUrls(opt.Cluster.ListenPeerURLs)
+	peerUrls, err := option.ParseUrls(opt.Cluster.ListenPeerUrls)
 	if err != nil {
 		return nil, err
 	}
-	adClientUrls, err := option.ParseUrls(opt.Cluster.AdvertiseClientURLs)
+	adClientUrls, err := option.ParseUrls(opt.Cluster.AdvertiseClientUrls)
 	if err != nil {
 		return nil, err
 	}
-	adPeerURLs, err := option.ParseUrls(opt.Cluster.InitialAdvertisePeerURLs)
+	adPeerURLs, err := option.ParseUrls(opt.Cluster.InitialAdvertisePeerUrls)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func CreateEtcdConfigAddMember(opt *option.Options, members *Members) (*embed.Co
 	config.Logger = "zap"
 	config.LogOutputs = []string{utils.GOOSPath(filepath.Join(opt.AbsLogDir, LogFileName))}
 
-	if len(opt.ClusterJoinURLs) == 0 {
+	if len(opt.ClusterJoinUrls) == 0 {
 		if members.ClusterMembersLen() == 1 && utils.IsDirEmpty(opt.AbsDataDir) {
 			config.ClusterState = embed.ClusterStateFlagNew
 		}

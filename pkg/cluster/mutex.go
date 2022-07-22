@@ -21,7 +21,7 @@ type cmutex struct {
 }
 
 func (c *cluster) NewCMutex(key string) (CMutex, error) {
-	session, err := c.GetClusterSession()
+	session, err := c.NewClusterSession()
 	if nil != err {
 		return nil, err
 	}
