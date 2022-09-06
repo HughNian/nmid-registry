@@ -29,8 +29,6 @@ func HttpRouter(httpServer *bm.Engine) {
 		group.GET("/fetch/all", WriteOnly, FetchAll)
 		group.GET("/fetch", WriteOnly, Fetch)
 		group.GET("/fetchs", WriteOnly, Fetchs)
-		group.GET("/poll", WriteOnly, Poll)
-		group.GET("/polls", WriteOnly, Polls)
 	}
 }
 

@@ -3,6 +3,7 @@ package registry
 import (
 	"encoding/json"
 	"fmt"
+	bm "github.com/go-kratos/kratos/pkg/net/http/blademaster"
 	"nmid-registry/pkg/cluster"
 	"sync"
 )
@@ -22,7 +23,7 @@ func NewRegistry(cls cluster.Cluster) *Registry {
 }
 
 //Register a new service.
-func (r *Registry) Register(arg *ArgRegister, ins *Instance) (err error) {
+func (r *Registry) Register(c *bm.Context, arg *ArgRegister, ins *Instance) (err error) {
 	var sc *Service
 
 	key := smapKey(arg.ServiceId, arg.Env)
@@ -42,6 +43,16 @@ func (r *Registry) Register(arg *ArgRegister, ins *Instance) (err error) {
 
 	//put to etcd cluster
 	r.cluster.Put(key, string(serviceVal))
+
+	return
+}
+
+func (r *Registry) Renew(c *bm.Context, arg *ArgRenew) (ins *Instance, err error) {
+
+	return
+}
+
+func (r *Registry) LogOff(c *bm.Context, arg *ArgLogOff) (err error) {
 
 	return
 }

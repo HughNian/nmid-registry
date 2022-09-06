@@ -32,17 +32,27 @@ func Register(c *bm.Context) {
 		}
 	}
 
-	re.Register(arg, ins)
+	re.Register(c, arg, ins)
 
 	c.JSON(true, nil)
 }
 
 func Renew(c *bm.Context) {
+	arg := new(registry.ArgRenew)
+	if err := c.Bind(arg); err != nil {
+		return
+	}
 
+	c.JSON(re.Renew(c, arg))
 }
 
 func LogOff(c *bm.Context) {
+	arg := new(registry.ArgLogOff)
+	if err := c.Bind(arg); err != nil {
+		return
+	}
 
+	c.JSON(nil, re.LogOff(c, arg))
 }
 
 func FetchAll(c *bm.Context) {
@@ -54,13 +64,5 @@ func Fetch(c *bm.Context) {
 }
 
 func Fetchs(c *bm.Context) {
-
-}
-
-func Poll(c *bm.Context) {
-
-}
-
-func Polls(c *bm.Context) {
 
 }
