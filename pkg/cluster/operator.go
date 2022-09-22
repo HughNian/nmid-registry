@@ -67,3 +67,12 @@ func (c *cluster) GetRaw(key string) (*mvccpb.KeyValue, error) {
 
 	return resp.Kvs[0], nil
 }
+
+func (c *cluster) DoWatch(key string) (chan<- WatchRet, error) {
+	watcher, err := c.NewWatcher()
+	if nil != err {
+		return nil, err
+	}
+
+	return watcher.Watch(key)
+}

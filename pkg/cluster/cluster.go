@@ -49,6 +49,7 @@ type Cluster interface {
 	Get(key string) (string, error)
 	GetRaw(key string) (*mvccpb.KeyValue, error)
 	CloseCluster(wg *sync.WaitGroup)
+	DoWatch(key string) (chan<- WatchRet, error)
 }
 
 type cluster struct {

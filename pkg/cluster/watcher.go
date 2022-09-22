@@ -8,12 +8,17 @@ import (
 )
 
 type Watcher interface {
-	Watch(key string) (<-chan *string, error)
+	Watch(key string) (chan<- WatchRet, error)
 }
 
 type watcher struct {
 	w    clientv3.Watcher
 	done chan struct{}
+}
+
+type WatchRet struct {
+	WType mvccpb.Event_EventType
+	WKey  string
 }
 
 func (c *cluster) NewWatcher() (Watcher, error) {
@@ -30,12 +35,12 @@ func (c *cluster) NewWatcher() (Watcher, error) {
 	}, nil
 }
 
-func (w *watcher) Watch(key string) (<-chan *string, error) {
+func (w *watcher) Watch(key string) (chan<- WatchRet, error) {
 	//can't use context with timeout here
 	ctx, cancel := context.WithCancel(context.Background())
 	wResp := w.w.Watch(ctx, key)
 
-	keyChan := make(chan *string, 10)
+	keyChan := make(chan<- WatchRet, 10)
 
 	go func() {
 		defer cancel()
@@ -56,10 +61,17 @@ func (w *watcher) Watch(key string) (<-chan *string, error) {
 				for _, event := range resp.Events {
 					switch event.Type {
 					case mvccpb.PUT:
-						value := string(event.Kv.Value)
-						keyChan <- &value
+						wRet := WatchRet{
+							WType: mvccpb.PUT,
+							WKey:  string(event.Kv.Value),
+						}
+						keyChan <- wRet
 					case mvccpb.DELETE:
-						keyChan <- nil
+						wRet := WatchRet{
+							WType: mvccpb.DELETE,
+							WKey:  string(event.Kv.Value),
+						}
+						keyChan <- wRet
 					default:
 						loger.Loger.Errorf("key %s received unknown event type %v", key, event.Type)
 					}

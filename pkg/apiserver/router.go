@@ -27,11 +27,11 @@ func HttpRouter(httpServer *bm.Engine) {
 		group.POST("/renew", Renew)
 		group.POST("/logoff", LogOff)
 		group.GET("/fetch/all", WriteOnly, FetchAll)
-		group.GET("/fetch", WriteOnly, Fetch)
-		group.GET("/fetchs", WriteOnly, Fetchs)
+		group.POST("/watch", WriteOnly, DoWatch)
 	}
 }
 
+//WriteOnly if route write only can't do read operator like as fetch, fetchs fetchAll
 func WriteOnly(c *bm.Context) {
 	if writeOnly {
 		c.JSON(nil, errMsg)

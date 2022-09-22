@@ -15,6 +15,11 @@ type Registry struct {
 	cluster  cluster.Cluster
 }
 
+type ReturnWatch struct {
+	WType int    `json:"w_type"`
+	WKey  string `json:"w_key"`
+}
+
 func NewRegistry(cls cluster.Cluster) *Registry {
 	return &Registry{
 		servicem: make(map[string]*Service),
@@ -55,6 +60,21 @@ func (r *Registry) Renew(c *bm.Context, arg *ArgRenew) (ins *Instance, err error
 func (r *Registry) LogOff(c *bm.Context, arg *ArgLogOff) (err error) {
 
 	return
+}
+
+func (r *Registry) FetchAll(c *bm.Context, arg *ArgFetchAll) (insArr []*Instance, err error) {
+
+	return
+}
+
+func (r *Registry) DoWatch(c *bm.Context, arg *ArgDoWatch) (rw ReturnWatch, err error) {
+	wRet, err := r.cluster.DoWatch(arg.ServiceId)
+	for ret := range wRet {
+		rw.WType = int(ret.WType)
+		rw.WKey = ret.WKey
+	}
+
+	return rw, err
 }
 
 func smapKey(serviceId, env string) string {

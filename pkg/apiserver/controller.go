@@ -56,13 +56,23 @@ func LogOff(c *bm.Context) {
 }
 
 func FetchAll(c *bm.Context) {
+	arg := new(registry.ArgFetchAll)
+	if err := c.Bind(arg); err != nil {
+		return
+	}
 
+	ret, err := re.FetchAll(c, arg)
+
+	c.JSON(ret, err)
 }
 
-func Fetch(c *bm.Context) {
+func DoWatch(c *bm.Context) {
+	arg := new(registry.ArgDoWatch)
+	if err := c.Bind(arg); err != nil {
+		return
+	}
 
-}
+	ret, err := re.DoWatch(c, arg)
 
-func Fetchs(c *bm.Context) {
-
+	c.JSON(ret, err)
 }

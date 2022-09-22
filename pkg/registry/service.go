@@ -16,10 +16,10 @@ var (
 )
 
 type Service struct {
-	ServiceId  string
-	InFlowUrl  string
-	OutFlowUrl string
-	Instances  []*Instance
+	ServiceId   string
+	InFlowAddr  string
+	OutFlowAddr string
+	Instances   []*Instance
 
 	LatestTimestamp int64
 }
@@ -48,8 +48,8 @@ type Instance struct {
 func NewService(arg *ArgRegister) *Service {
 	return &Service{
 		ServiceId:       arg.ServiceId,
-		InFlowUrl:       arg.InFlowUrl,
-		OutFlowUrl:      arg.OutFlowUrl,
+		InFlowAddr:      arg.InFlowAddr,
+		OutFlowAddr:     arg.OutFlowAddr,
 		Instances:       make([]*Instance, 0),
 		LatestTimestamp: now,
 	}
