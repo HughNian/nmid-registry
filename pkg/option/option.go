@@ -195,6 +195,9 @@ func (opt *Options) Parse() (string, error) {
 	if opt.UseStandEtcd {
 		opt.ClusterRole = "slave" // when using external stand etcd, the cluster role cannot be "slave"
 	}
+	if opt.ClusterRole == "master" && len(opt.Cluster.InitialCluster) == 0 {
+		opt.Cluster.InitialCluster = map[string]string{opt.Name: opt.Cluster.InitialAdvertisePeerUrls[0]}
+	}
 
 	err = opt.verification()
 	if err != nil {

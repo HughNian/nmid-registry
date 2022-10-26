@@ -171,7 +171,7 @@ func (c *cluster) CheckClusterName() error {
 	if len(value) > 0 {
 		if c.options.ClusterName != value {
 			loger.Loger.Errorf("clustername check mismatch local(%s) != exist(%s)", c.options.ClusterName, value)
-			panic(err)
+			panic(any(err))
 		}
 	} else {
 		return fmt.Errorf("key %s not found", NmClusterNameKey)
@@ -180,7 +180,7 @@ func (c *cluster) CheckClusterName() error {
 	return nil
 }
 
-//BackendHandle 处理集群状态同步，更新成员信息
+// BackendHandle 处理集群状态同步，更新成员信息
 func (c *cluster) BackendHandle() {
 	for {
 		select {
@@ -201,7 +201,7 @@ func (c *cluster) BackendHandle() {
 	}
 }
 
-//SyncStatus 同步状态
+// SyncStatus 同步状态
 func (c *cluster) SyncStatus() error {
 	status := MemberStatus{
 		Options: *c.options,
@@ -237,7 +237,7 @@ func (c *cluster) SyncStatus() error {
 	return nil
 }
 
-//UpdateMembers 更新成员信息
+// UpdateMembers 更新成员信息
 func (c *cluster) UpdateMembers() error {
 	client, err := c.GetClusterClient()
 	if err != nil {
