@@ -3,6 +3,7 @@ package apiserver
 import (
 	"context"
 	bm "github.com/go-kratos/kratos/pkg/net/http/blademaster"
+	xtime "github.com/go-kratos/kratos/pkg/time"
 	"nmid-registry/pkg/cluster"
 	"nmid-registry/pkg/loger"
 	"nmid-registry/pkg/option"
@@ -38,7 +39,7 @@ func NewApiServer(opt *option.Options, cls cluster.Cluster) (*ApiServer, error) 
 
 	//http server
 	httpServer := bm.DefaultServer(&bm.ServerConfig{
-		Network: "http",
+		Timeout: xtime.Duration(30 * time.Second),
 		Addr:    opt.ApiAddr,
 	})
 	apiServer.server = httpServer

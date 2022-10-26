@@ -33,23 +33,21 @@ func (r *Registry) Register(c *bm.Context, arg *ArgRegister, ins *Instance) (err
 
 	key := smapKey(arg.ServiceId, arg.Env)
 	r.lock.Lock()
-	if sc, ok := r.servicem[key]; !ok {
+	sc, ok := r.servicem[key]
+	if !ok {
 		sc = NewService(arg)
 		r.servicem[key] = sc
 	}
 	r.lock.Unlock()
 
 	sc.Instances = append(sc.Instances, ins)
-
 	serviceVal, err := json.Marshal(sc)
 	if nil != err {
 		return err
 	}
 
 	//put to etcd cluster
-	r.cluster.Put(key, string(serviceVal))
-
-	return
+	return r.cluster.Put(key, string(serviceVal))
 }
 
 func (r *Registry) Renew(c *bm.Context, arg *ArgRenew) (ins *Instance, err error) {
@@ -68,11 +66,11 @@ func (r *Registry) FetchAll(c *bm.Context, arg *ArgFetchAll) (insArr []*Instance
 }
 
 func (r *Registry) DoWatch(c *bm.Context, arg *ArgDoWatch) (rw ReturnWatch, err error) {
-	wRet, err := r.cluster.DoWatch(arg.ServiceId)
-	for ret := range wRet {
-		rw.WType = int(ret.WType)
-		rw.WKey = ret.WKey
-	}
+	//wRet, err := r.cluster.DoWatch(arg.ServiceId)
+	//for ret := range wRet {
+	//	rw.WType = int(ret.WType)
+	//	rw.WKey = ret.WKey
+	//}
 
 	return rw, err
 }

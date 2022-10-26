@@ -9,7 +9,7 @@ type ArgRegister struct {
 	Env             string   `form:"env" binding:"required"`
 	Hostname        string   `form:"hostname" binding:"required"`
 	Status          uint32   `form:"status" binding:"required"`
-	Addrs           []string `form:"addrs" validate:"gt=0"`
+	Addrs           []string `form:"addrs"` //validate:"gt=0"
 	Version         string   `form:"version"`
 	Metadata        string   `form:"metadata"`
 	LatestTimestamp int64    `form:"latest_timestamp"`

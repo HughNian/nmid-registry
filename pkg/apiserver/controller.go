@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/go-kratos/kratos/pkg/ecode"
 	bm "github.com/go-kratos/kratos/pkg/net/http/blademaster"
 	"nmid-registry/pkg/loger"
@@ -32,7 +33,12 @@ func Register(c *bm.Context) {
 		}
 	}
 
-	re.Register(c, arg, ins)
+	err := re.Register(c, arg, ins)
+	fmt.Println(`err`, err)
+	if nil != err {
+		c.JSON(false, nil)
+		return
+	}
 
 	c.JSON(true, nil)
 }
